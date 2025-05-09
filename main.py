@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4"
 OPENROUTER_API_KEY = "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"
 OPENROUTER_MODEL = "microsoft/MAI-DS-R1"
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://your-render-app-url.onrender.com")
 
 # Inițializare Flask și Bot
 app = Flask(__name__)
@@ -225,10 +225,21 @@ def query_llm(messages):
 def webhook():
     """Procesează update-uri primite de la Telegram."""
     if request.headers.get('content-type') == 'application/json':
-        update = types.Update.de_json(request.get_data(as_text=True))
-        bot.process_new_updates([update])
+        json_string = request.get_data(as_text=True)
+        update = types.Update.de_json(json_string)
+        
+        # Log pentru debugging
+        print(f"Update primit: {json_string}")
+        
+        try:
+            bot.process_new_updates([update])
+            print("Update procesat cu succes")
+        except Exception as e:
+            print(f"Eroare la procesarea update-ului: {e}")
+        
         return '', 200
     else:
+        print(f"Content-type nevalid: {request.headers.get('content-type')}")
         return '', 403
 
 @app.route('/set_webhook', methods=['GET', 'POST'])
@@ -246,13 +257,49 @@ def index():
     """Endpoint simplu pentru verificarea stării serverului."""
     return "EdgeSeekr Bot Server is running", 200
 
+@app.route('/debug', methods=['GET'])
+def debug():
+    """Endpoint pentru verificarea stării botului și a webhook-ului."""
+    try:
+        webhook_info = bot.get_webhook_info()
+        bot_info = bot.get_me()
+        
+        debug_info = {
+            "bot_info": {
+                "id": bot_info.id,
+                "username": bot_info.username,
+                "first_name": bot_info.first_name,
+                "can_join_groups": bot_info.can_join_groups,
+                "can_read_all_group_messages": bot_info.can_read_all_group_messages,
+                "supports_inline_queries": bot_info.supports_inline_queries,
+            },
+            "webhook_info": {
+                "url": webhook_info.url,
+                "has_custom_certificate": webhook_info.has_custom_certificate,
+                "pending_update_count": webhook_info.pending_update_count,
+                "last_error_date": webhook_info.last_error_date,
+                "last_error_message": webhook_info.last_error_message,
+                "max_connections": webhook_info.max_connections,
+            },
+            "environment": {
+                "webhook_url": WEBHOOK_URL,
+                "telegram_token": f"{TELEGRAM_TOKEN[:5]}...{TELEGRAM_TOKEN[-5:]}",  # Parțial mascat
+                "openrouter_model": OPENROUTER_MODEL,
+            }
+        }
+        
+        return jsonify(debug_info), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     # Setează webhook-ul la pornire și rulează serverul
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     
-    # Asigură-te că webhook-ul este setat când aplicația este în producție
-    if 'DYNO' in os.environ:  # Verifică dacă rulăm pe un server (Render)
+    # În Render.com nu există 'DYNO', așa că vom configura direct webhook-ul
+    if WEBHOOK_URL != "https://your-render-app-url.onrender.com":  # Verifică dacă avem un URL valid
         bot.remove_webhook()
         bot.set_webhook(url=f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}")
+        print(f"Webhook setat la: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
     
     app.run(host="0.0.0.0", port=port)
