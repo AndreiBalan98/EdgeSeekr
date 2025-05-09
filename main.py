@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Configurare bot și API keys
 TELEGRAM_TOKEN = "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4"
 OPENROUTER_API_KEY = "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"
-OPENROUTER_MODEL = "microsoft/MAI-DS-R1"
+OPENROUTER_MODEL = "microsoft/mai-ds-r1:free"  # Modificat pentru a folosi sufixul :free și caz corect
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
 
 # Inițializare Flask și Bot
@@ -283,6 +283,9 @@ def handle_llm_message(message):
             # Pregătește contextul pentru trimitere la API
             messages = list(user_contexts[user_id]["messages"])
             
+            # Adaugă logging pentru debugging
+            print(f"Trimit către OpenRouter: {json.dumps({'model': OPENROUTER_MODEL, 'messages': messages})}")
+            
             # Apelează OpenRouter API
             response = query_llm(messages)
             
@@ -341,7 +344,7 @@ def query_llm(messages):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://edge-seekr-bot.onrender.com",  # înlocuiește cu URL-ul aplicației tale
+        "HTTP-Referer": "https://edge-seekr-bot.onrender.com",
         "X-Title": "EdgeSeekr Bot"
     }
     
@@ -351,7 +354,17 @@ def query_llm(messages):
     }
     
     try:
+        # Adaugă mai multe detalii de logging
+        print(f"Trimitere request la: {url}")
+        print(f"Headers: {json.dumps(headers, default=str)}")
+        print(f"Data: {json.dumps(data, default=str)}")
+        
         response = requests.post(url, headers=headers, json=data, timeout=60)
+        
+        # Adaugă logging pentru răspuns
+        print(f"Status code: {response.status_code}")
+        print(f"Răspuns: {response.text[:500]}...")  # Primele 500 caractere pentru a nu umple log-urile
+        
         response.raise_for_status()
         result = response.json()
         
@@ -444,9 +457,38 @@ def debug():
         bot_info = getme_response.json()
         webhook_info = webhook_info_response.json()
         
+        # Adaugă un test pentru OpenRouter API
+        openrouter_test = {
+            "status": "not_tested"
+        }
+        
+        try:
+            # Test simplu către OpenRouter pentru a verifica conectivitatea
+            test_message = [{
+                "role": "user",
+                "content": "Hello, just testing connection"
+            }]
+            test_response = query_llm(test_message)
+            if test_response:
+                openrouter_test = {
+                    "status": "success",
+                    "response_preview": test_response[:100] + "..." if len(test_response) > 100 else test_response
+                }
+            else:
+                openrouter_test = {
+                    "status": "failed",
+                    "error": "No response received"
+                }
+        except Exception as or_error:
+            openrouter_test = {
+                "status": "error",
+                "error": str(or_error)
+            }
+        
         debug_info = {
             "bot_api_response": bot_info,
             "webhook_info": webhook_info,
+            "openrouter_test": openrouter_test,
             "environment": {
                 "webhook_url": WEBHOOK_URL,
                 "telegram_token_prefix": TELEGRAM_TOKEN[:5],
