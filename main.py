@@ -1,21 +1,19 @@
-import requests # type: ignore
-import json
 import os
+import json
 import logging
-from telegram import Update # type: ignore
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext, JobQueue # type: ignore
-from datetime import datetime
+import requests  # type: ignore
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-# Set log level for debugging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# Logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 
-# Stocăm utilizatorii activi
-active_users = set()
-
-# Prompt de sistem – stil prietenos, natural
+# Prompt de sistem – stil prietenos
 SYSTEM_PROMPT = {
     "role": "system",
     "content": (
@@ -25,7 +23,8 @@ SYSTEM_PROMPT = {
     )
 }
 
-def call_llm(prompt):
+
+def call_llm(prompt: str) -> str:
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -46,31 +45,20 @@ def call_llm(prompt):
         return response.json()["choices"][0]["message"]["content"]
     else:
         print(response.text)
-        return "Eroare de la modelul MAI DS R1."
+        return "Oops, ceva n-a mers cu răspunsul 🤷‍♂️"
 
-def handle(update: Update, context: CallbackContext):
-    user_id = update.effective_chat.id
-    active_users.add(user_id)
+
+async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
     response = call_llm(user_text)
-    context.bot.send_message(chat_id=user_id, text=response)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
-def send_reminders(context: CallbackContext):
-    for user_id in active_users:
-        context.bot.send_message(chat_id=user_id, text="Hei, ce mai faci? 😊 Dacă vrei să mai vorbim, sunt aici!")
 
 def main():
-    updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
+    app.run_polling()
 
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle))
-
-    # JobQueue pentru trimiterea de mesaje automate
-    job_queue = updater.job_queue
-    job_queue.run_repeating(send_reminders, interval=600, first=600)  # la fiecare 10 minute
-
-    updater.start_polling()
-    updater.idle()
 
 if __name__ == "__main__":
     main()
