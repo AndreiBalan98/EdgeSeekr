@@ -1,7 +1,8 @@
-import requests
+import requests # type: ignore
+import json
 import os
-from telegram import Update
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
+from telegram import Update # type: ignore
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext # type: ignore
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -10,19 +11,23 @@ def call_llm(prompt):
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Title": "EdgeSeekrBot"
     }
     data = {
-        "model": "microsoft/phi-2",  # sau alt model OpenRouter
+        "model": "microsoft/mai-ds-r1:free",
         "messages": [
             {"role": "user", "content": prompt}
         ]
     }
-    res = requests.post(url, headers=headers, json=data)
-    if res.ok:
-        return res.json()["choices"][0]["message"]["content"]
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    if response.ok:
+        return response.json()["choices"][0]["message"]["content"]
     else:
-        return "Eroare de la LLM."
+        print(response.text)
+        return "Eroare de la modelul MAI DS R1."
 
 def handle(update: Update, context: CallbackContext):
     user_text = update.message.text
