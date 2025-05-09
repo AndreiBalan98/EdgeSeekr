@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4"
 OPENROUTER_API_KEY = "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"
 OPENROUTER_MODEL = "microsoft/MAI-DS-R1"
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://your-render-app-url.onrender.com")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
 
 # Inițializare Flask și Bot
 app = Flask(__name__)
