@@ -6,6 +6,6 @@ services:
     startCommand: python main.py
     envVars:
       - key: TELEGRAM_TOKEN
-        value: 7711949090\:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4
+        value: 7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4
       - key: OPENROUTER_API_KEY
         value: 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
