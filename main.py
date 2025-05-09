@@ -2,8 +2,8 @@ import os
 import json
 import logging
 import requests  # type: ignore
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
+from telegram import Update # type: ignore
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters # type: ignore
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
