@@ -2,8 +2,8 @@ import os
 import json
 import logging
 import requests  # type: ignore
-from telegram import Update # type: ignore
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters # type: ignore
+from telegram import Update  # type: ignore
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters  # type: ignore
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -23,6 +23,21 @@ SYSTEM_PROMPT = {
     )
 }
 
+# Istoric mesaje
+MAX_CHAR_COUNT = 50000
+message_history = []  # conține dict-uri: {"role": "...", "content": "..."}
+
+
+def update_message_history(role: str, content: str):
+    global message_history
+    message_history.append({"role": role, "content": content})
+
+    # Trunchiem istoria dacă depășim limita de caractere
+    total_chars = sum(len(msg["content"]) for msg in message_history)
+    while total_chars > MAX_CHAR_COUNT and message_history:
+        message_history.pop(0)
+        total_chars = sum(len(msg["content"]) for msg in message_history)
+
 
 def call_llm(prompt: str) -> str:
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -31,18 +46,20 @@ def call_llm(prompt: str) -> str:
         "Content-Type": "application/json",
         "X-Title": "EdgeSeekrBot"
     }
+
+    update_message_history("user", prompt)
+
     data = {
         "model": "microsoft/mai-ds-r1:free",
-        "messages": [
-            SYSTEM_PROMPT,
-            {"role": "user", "content": prompt}
-        ]
+        "messages": [SYSTEM_PROMPT] + message_history
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
 
     if response.ok:
-        return response.json()["choices"][0]["message"]["content"]
+        ai_response = response.json()["choices"][0]["message"]["content"]
+        update_message_history("assistant", ai_response)
+        return ai_response
     else:
         print(response.text)
         return "Oops, ceva n-a mers cu răspunsul 🤷‍♂️"
