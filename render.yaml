@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: telegram-llm-bot
+    env: python
+    buildCommand: ""
+    startCommand: python main.py
+    envVars:
+      - key: TELEGRAM_TOKEN
+        value: tokenul_tău_telegram
+      - key: OPENROUTER_API_KEY
+        value: tokenul_tău_openrouter
