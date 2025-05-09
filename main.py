@@ -3,7 +3,7 @@ import json
 import logging
 import requests # type: ignore
 from flask import Flask, request, jsonify # type: ignore
-from telebot import TeleBot, types, apihelper
+from telebot import TeleBot, types, apihelper # type: ignore
 from collections import defaultdict, deque
 
 # Activează logging detaliat pentru telebot
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4"
 OPENROUTER_API_KEY = "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"
 OPENROUTER_MODEL = "microsoft/MAI-DS-R1"
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://your-render-app-url.onrender.com")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
 
 # Inițializare Flask și Bot
 app = Flask(__name__)
@@ -463,7 +463,7 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     
     # În Render.com nu există 'DYNO', așa că vom configura direct webhook-ul
-    if WEBHOOK_URL != "https://your-render-app-url.onrender.com":  # Verifică dacă avem un URL valid
+    if WEBHOOK_URL != "https://edge-seekr-bot.onrender.com":  # Verifică dacă avem un URL valid
         print(f"Setare webhook la pornire către: {WEBHOOK_URL}/{TELEGRAM_TOKEN}")
         try:
             response = requests.post(
