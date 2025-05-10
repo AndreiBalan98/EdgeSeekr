@@ -14,7 +14,7 @@ from database import init_db, ADMIN_ID
 # Acum putem importa modulele care depind de database
 from bot_core import bot, setup_webhook, TELEGRAM_BOT_TOKEN
 from commands import register_commands
-from admin_tools import handle_admin_callback
+from admin_tools import admin_callback_handler
 from scheduler import start_scheduler  # Importăm start_scheduler
 
 # Configurare logging simplă
