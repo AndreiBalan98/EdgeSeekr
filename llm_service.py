@@ -1,15 +1,23 @@
-#!/usr/bin/env python3
 import os
 import logging
 import requests
-from bot_core import WEBHOOK_URL
+from dotenv import load_dotenv
+from bot_core import WEBHOOK_URL  # Importăm doar ce avem nevoie pentru a evita circular imports
+
+# Încarcă variabilele din .env
+load_dotenv()
 
 # Configurare logging
 logger = logging.getLogger(__name__)
 
-# Configurări OpenRouter - standardizare nume variabile
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "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")
-OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "microsoft/mai-ds-r1:free")
+# Configurări OpenRouter - fără credențiale hard-codate
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "microsoft/mai-ds-r1:free")  # Default model e ok
+
+# Verificare API key
+if not OPENROUTER_API_KEY:
+    logger.critical("OPENROUTER_API_KEY nu este setat! Verifică variabilele de mediu sau .env")
+    raise EnvironmentError("OPENROUTER_API_KEY lipsește")
 
 def query_llm(messages):
     """Interogare API OpenRouter"""

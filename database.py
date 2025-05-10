@@ -1,15 +1,21 @@
-#!/usr/bin/env python3
 import os
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Încarcă variabilele din .env
+load_dotenv()
 
 # Configurare logging
 logger = logging.getLogger(__name__)
 
-# ID administrator - singurul utilizator cu acces la funcțiile admin
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "8111657402"))
+# ID administrator - fără default hard-codat
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # Default la 0 = niciun admin
+
+if ADMIN_ID == 0:
+    logger.warning("ADMIN_ID nu este setat! Funcționalitățile admin nu vor fi disponibile.")
 
 # Calea către directorul de date
 DATA_DIR = Path("data")

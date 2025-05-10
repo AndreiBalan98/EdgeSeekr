@@ -1,16 +1,30 @@
-#!/usr/bin/env python3
 import os
 import logging
 import requests
 from telebot import TeleBot
 from collections import defaultdict, deque
+from dotenv import load_dotenv
+
+# Încarcă variabilele din .env
+load_dotenv()
 
 # Configurare logging
 logger = logging.getLogger(__name__)
 
-# Configurări de bază - STANDARDIZAREA VARIABILELOR DE MEDIU
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4")
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
+# Configurări de bază - fără credențiale hard-codate ca default values
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+
+# Verificare dacă există token și webhook URL
+if not TELEGRAM_BOT_TOKEN:
+    logger.critical("TELEGRAM_BOT_TOKEN nu este setat! Verifică variabilele de mediu sau .env")
+    # Aici putem seta o valoare implicită pentru dezvoltare sau opri execuția
+    # În producție este recomandat să oprim execuția
+    raise EnvironmentError("TELEGRAM_BOT_TOKEN lipsește")
+
+if not WEBHOOK_URL:
+    logger.warning("WEBHOOK_URL nu este setat! Webhook-ul nu va funcționa corect.")
+    WEBHOOK_URL = "https://example.com"  # O valoare default pentru a evita erorile
 
 # Inițializare Bot
 bot = TeleBot(TELEGRAM_BOT_TOKEN, threaded=False)

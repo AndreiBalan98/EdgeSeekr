@@ -3,6 +3,10 @@ import os
 from flask import Flask, request
 from telebot import types
 import logging
+from dotenv import load_dotenv
+
+# Încarcă variabilele din .env
+load_dotenv()
 
 # Inițializare baza de date înaintea altor importuri pentru a evita importuri circulare
 from database import init_db, ADMIN_ID
@@ -10,7 +14,8 @@ from database import init_db, ADMIN_ID
 # Acum putem importa modulele care depind de database
 from bot_core import bot, setup_webhook, TELEGRAM_BOT_TOKEN
 from commands import register_commands
-from admin_tools import handle_admin_callback  # Importăm funcția callback
+from admin_tools import handle_admin_callback
+from scheduler import start_scheduler  # Importăm start_scheduler
 
 # Configurare logging simplă
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -55,6 +60,9 @@ def initialize_app():
     
     # Setează webhook la pornire
     setup_webhook()
+    
+    # Pornește scheduler-ul
+    start_scheduler()  # Adaugă această linie
     
     return app
 
