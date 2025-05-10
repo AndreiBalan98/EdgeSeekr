@@ -56,7 +56,7 @@ def initialize_app():
     register_commands()
     
     # Înregistrează callback handler pentru admin
-    bot.callback_query_handler(func=lambda call: call.data.startswith('admin_'))(handle_admin_callback)
+    bot.callback_query_handler(func=lambda call: call.data.startswith('admin_'))(admin_callback_handler)
     
     # Setează webhook la pornire
     setup_webhook()
