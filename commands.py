@@ -2,13 +2,15 @@
 import logging
 from telebot import types
 
+# Importurile doar din modulele care nu vor crea importuri circulare
 from bot_core import (
     bot, add_to_context, clear_context, send_message, send_typing_action, 
-    set_active_persona, get_active_persona
+    set_active_persona, get_active_persona, user_contexts
 )
 from llm_service import query_llm
 from database import log_user_activity, log_conversation, is_admin
 from persona_prompts import get_persona_prompt, get_all_personas
+# Import direct - fără importuri circulare
 from admin_tools import handle_admin_panel
 
 # Configurare logging
@@ -28,6 +30,9 @@ def register_commands():
     
     # Handler pentru toate mesajele text
     bot.message_handler(content_types=['text'])(handle_message)
+    
+    # Înregistrăm callback handler pentru personaje
+    bot.callback_query_handler(func=lambda call: call.data.startswith('persona_'))(handle_persona_callback)
 
 def cmd_start(message):
     """Comandă start - întâmpină utilizatorul"""
@@ -192,7 +197,6 @@ def handle_message(message):
     
     try:
         # Obține contextul conversației pentru utilizator
-        from bot_core import user_contexts
         messages = list(user_contexts[user_id]["messages"])
         
         # Interogare LLM pentru răspuns
@@ -213,7 +217,6 @@ def handle_message(message):
         send_message(message.chat.id, "❌ A apărut o eroare. Te rog încearcă din nou.")
 
 # Callback pentru butoanele inline
-@bot.callback_query_handler(func=lambda call: call.data.startswith('persona_'))
 def handle_persona_callback(call):
     """Gestionează apăsările pe butoanele pentru personaje"""
     try:

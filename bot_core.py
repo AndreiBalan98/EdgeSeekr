@@ -8,12 +8,12 @@ from collections import defaultdict, deque
 # Configurare logging
 logger = logging.getLogger(__name__)
 
-# Configurări de bază
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4")
+# Configurări de bază - STANDARDIZAREA VARIABILELOR DE MEDIU
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "7711949090:AAGXMoHzN66c8WB2hkdmssZU5PZzGgjZmh4")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "https://edge-seekr-bot.onrender.com")
 
 # Inițializare Bot
-bot = TeleBot(TELEGRAM_TOKEN, threaded=False)
+bot = TeleBot(TELEGRAM_BOT_TOKEN, threaded=False)
 
 # Stare utilizatori
 user_contexts = defaultdict(lambda: {"messages": deque(), "char_count": 0})
@@ -22,10 +22,10 @@ MAX_CONTEXT_CHARS = 16000  # Limita de caractere pentru context
 
 def setup_webhook():
     """Setează webhook-ul pentru bot"""
-    webhook_url = f"{WEBHOOK_URL}/{TELEGRAM_TOKEN}"
+    webhook_url = f"{WEBHOOK_URL}/{TELEGRAM_BOT_TOKEN}"
     try:
         response = requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook",
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook",
             json={"url": webhook_url}
         )
         if response.status_code == 200 and response.json().get('ok'):
@@ -45,7 +45,7 @@ def send_message(chat_id, text, parse_mode=None, reply_markup=None):
     
     try:
         return requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", 
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage", 
             json=data
         )
     except Exception as e:
@@ -72,7 +72,8 @@ def clear_context(user_id):
     """Resetează contextul conversațional"""
     if user_id in user_contexts:
         user_contexts[user_id] = {"messages": deque(), "char_count": 0}
-    user_active_persona[user_id] = None
+    if user_id in user_active_persona:
+        user_active_persona[user_id] = None
     return True
 
 def get_active_persona(user_id):
@@ -92,7 +93,7 @@ def delete_messages(chat_id, message_id, num_messages=10):
             break
         try:
             response = requests.post(
-                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/deleteMessage",
+                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteMessage",
                 json={"chat_id": chat_id, "message_id": i}
             )
             if response.status_code == 200:
@@ -105,7 +106,7 @@ def send_typing_action(chat_id):
     """Trimite indicatorul de scriere"""
     try:
         requests.post(
-            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendChatAction",
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendChatAction",
             json={"chat_id": chat_id, "action": "typing"}
         )
     except Exception as e:

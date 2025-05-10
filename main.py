@@ -4,9 +4,13 @@ from flask import Flask, request
 from telebot import types
 import logging
 
-from bot_core import bot, setup_webhook
+# Inițializare baza de date înaintea altor importuri pentru a evita importuri circulare
 from database import init_db, ADMIN_ID
+
+# Acum putem importa modulele care depind de database
+from bot_core import bot, setup_webhook, TELEGRAM_BOT_TOKEN
 from commands import register_commands
+from admin_tools import handle_admin_callback  # Importăm funcția callback
 
 # Configurare logging simplă
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -16,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Endpoint-uri Flask
-@app.route(f'/{os.environ.get("TELEGRAM_TOKEN", "")}', methods=['POST'])
+@app.route(f'/{TELEGRAM_BOT_TOKEN}', methods=['POST'])
 def webhook():
     """Primește actualizări de la Telegram"""
     if request.headers.get('content-type') == 'application/json':
@@ -38,14 +42,27 @@ def index():
     """Pagina de status"""
     return "EdgeSeekr Bot Server is running", 200
 
-if __name__ == "__main__":
+def initialize_app():
+    """Inițializează aplicația"""
     # Inițializează baza de date
     init_db()
     
     # Înregistrează comenzile botului
     register_commands()
     
-    # Setează webhook la pornire și pornește serverul
-    port = int(os.environ.get("PORT", 10000))
+    # Înregistrează callback handler pentru admin
+    bot.callback_query_handler(func=lambda call: call.data.startswith('admin_'))(handle_admin_callback)
+    
+    # Setează webhook la pornire
     setup_webhook()
+    
+    return app
+
+if __name__ == "__main__":
+    # Inițializează aplicația și pornește serverul
+    app = initialize_app()
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+else:
+    # Pentru WSGI servers (Gunicorn)
+    app = initialize_app()
